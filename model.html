@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>רשת נירונים קונבולוציונית - ניהול ואימון המודל</title>
+    <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+
+    <header>
+        <h1>מערכת זיהוי צורות באמצעות מודל CNN מאפס</h1>
+        <nav>
+            <a href="index.html">דף הבית ומילון מושגים</a> | 
+            <a href="model.html" class="active">עורך הציור ואימון המודל</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="model-container">
+            <section class="control-panel">
+                <h2>הגדרות הארכיטקטורה של ה-CNN</h2>
+                <p class="instruction-text">קבעי את הפרמטרים של הרשת לפני תחילת האימון:</p>
+                
+                <div class="control-group">
+                    <label for="num-layers">מספר שכבות חבויות (Hidden Layers):</label>
+                    <input type="number" id="num-layers" min="1" max="4" value="2">
+                </div>
+
+                <div class="control-group">
+                    <label for="num-filters">מספר פילטרים (Filters):</label>
+                    <input type="number" id="num-filters" min="1" max="16" value="4">
+                </div>
+
+                <div class="control-group">
+                    <label for="filter-size">גודל פילטר (Filter Size):</label>
+                    <select id="filter-size">
+                        <option value="3">3x3</option>
+                        <option value="5">5x5</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="learning-rate">קצב למידה (Learning Rate):</label>
+                    <input type="number" id="learning-rate" min="0.001" max="0.5" step="0.001" value="0.05">
+                </div>
+
+                <div class="control-group">
+                    <label for="epochs">מספר מחזורי אימון (Epochs):</label>
+                    <input type="number" id="epochs" min="1" max="1000" value="50">
+                </div>
+
+                <div class="button-row">
+                    <button id="btn-lock-params" class="btn-primary">קבע פרמטרים ואתחל רשת</button>
+                </div>
+
+                <hr>
+
+                <div class="status-box">
+                    <h3>מצב המודל:</h3>
+                    <p>סטטוס: <span id="model-status" class="status-text text-red">לא מאותחל</span></p>
+                    <p>מחזור נוכחי (Epoch): <span id="current-epoch">-</span></p>
+                    <p>מדד הפסד (Loss): <span id="current-loss">-</span></p>
+                    <p>רמת דיוק (Accuracy): <span id="current-accuracy">-</span></p>
+                </div>
+            </section>
+
+            <section class="workspace-panel">
+                <h2>עורך ציור לזיהוי צורות</h2>
+                <p class="instruction-text">בחרי צורה, ציירי אותה במרכז הלוח ולחצי על הפעולה הרצויה (עיגול / ריבוע / משולש):</p>
+
+                <div class="canvas-wrapper">
+                    <canvas id="paint-canvas" width="280" height="280"></canvas>
+                </div>
+
+                <div class="canvas-controls">
+                    <button id="btn-clear-canvas" class="btn-secondary">נקה לוח ציור</button>
+                    
+                    <span class="label-select-shape">תגית לאימון:</span>
+                    <select id="target-shape">
+                        <option value="0">עיגול</option>
+                        <option value="1">ריבוע</option>
+                        <option value="2">משולש</option>
+                    </select>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btn-train" class="btn-action btn-disabled" disabled>אמן מודל (Train)</button>
+                    <button id="btn-predict" class="btn-action btn-disabled" disabled>בדיקה (Predict)</button>
+                    <button id="btn-reset" class="btn-danger">אתחול מלא (Reset)</button>
+                </div>
+
+                <div id="prediction-result" class="prediction-box">
+                    הצורה שזוהתה: <span id="predicted-shape" class="predicted-value">-</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 פותח במסגרת קורס פיתוח פלטפורמות WEB | אפיקה</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
