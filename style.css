@@ -296,11 +296,19 @@ code {
 }
 
 #model-arch {
+    display: block;
+    margin-top: 4px;
+    padding: 8px 10px;
+    background-color: #eef7f2;
+    border: 1px solid #d4e9df;
+    border-radius: 6px;
     font-size: 12px;
-    color: #16a085;
+    font-family: Consolas, monospace;
+    color: #16794f;
     direction: ltr;
-    display: inline-block;
     text-align: left;
+    line-height: 1.7;
+    word-break: break-word;
 }
 
 /* ברי הסתברות של הניבוי */
