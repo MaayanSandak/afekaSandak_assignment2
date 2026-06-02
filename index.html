@@ -26,7 +26,6 @@
             <p>להלן המונחים המרכזיים המלווים את הארכיטקטורה, הקוד ותהליך האימון של המערכת:</p>
             
             <div class="dictionary-grid">
-                <!-- קבוצה 1: מונחים בסיסיים וארכיטקטורה -->
                 <div class="card"><strong>1. AI (Artificial Intelligence):</strong> בינה מלאכותית - תחום במדעי המחשב העוסק ביצירת מערכות הפועלות ולומדות בצורה אוטונומית.</div>
                 <div class="card"><strong>2. Machine Learning:</strong> למידת מכונה - תת-תחום ב-AI המאפשר למחשבים ללמוד מתוך נתונים ללא תכנות מפורש.</div>
                 <div class="card"><strong>3. Deep Learning:</strong> למידה עמוקה - טכנולוגיה המשתמשת ברשתות נירונים מרובות שכבות לזיהוי תבניות מורכבות.</div>
@@ -37,10 +36,8 @@
                 <div class="card"><strong>8. Hidden Layer:</strong> שכבה חבויה - שכבת חישוב שנמצאת בין שכבת הקלט לשכבת הפלט ומחלצת מאפיינים מהמידע.</div>
                 <div class="card"><strong>9. Output Layer:</strong> שכבת הפלט - השכבה האחרונה שמציגה את תוצאת המודל (זיהוי אחת מ-3 הצורות).</div>
                 <div class="card"><strong>10. Convolution:</strong> קונבולוציה (קיפול) - פעולה מתמטית הסורקת את התמונה בעזרת מטריצה קטנה ומחלצת מאפיינים מרחביים.</div>
-                
-                <!-- קבוצה 2: רכיבי קונבולוציה וסינון -->
                 <div class="card"><strong>11. Filter / Kernel:</strong> מסנן / גרעין - מטריצה קטנה של משקלים המשמשת לסריקת התמונה ואיתור קווים, קצוות וצורות.</div>
-                <div class="card"><strong>12. Feature Map:</strong> מפת מאפיינים - המטריצה המתקבלת לאחר ביצוע פעולת הקונבולוציה, המציגה היכן זוהה המאפיין בתמונה.</div>
+                <div class="card"><strong>12. Feature Map:</strong> מפת מאפיינים - המטריצה המתקנת לאחר ביצוע פעולת הקונבולוציה, המציגה היכן זוהה המאפיין בתמונה.</div>
                 <div class="card"><strong>13. Stride:</strong> פסיעה - מספר הפיקסלים שהפילטר זז בכל שלב בזמן סריקת התמונה.</div>
                 <div class="card"><strong>14. Padding:</strong> ריפוד - הוספת שוליים (בדרך כלל אפסים) מסביב לתמונת הקלט כדי לשמור על ממדי המטריצה המקורית.</div>
                 <div class="card"><strong>15. Pooling:</strong> צמצום / איחוד - שכבה המקטינה את הממדים הפיזיים של מפת המאפיינים כדי להפחית חישובים ולמנוע Overfitting.</div>
@@ -49,20 +46,16 @@
                 <div class="card"><strong>18. Activation Function:</strong> פונקציית אקטיבציה (הפעלה) - פונקציה מתמטית הקובעת האם הנירון יופעל ומה יהיה עוצמת הפלט שלו.</div>
                 <div class="card"><strong>19. ReLU (Rectified Linear Unit):</strong> פונקציית הפעלה מתמטית המחזירה 0 עבור ערכים שליליים ואת הערך עצמו עבור חיוביים (f(x)=max(0,x)).</div>
                 <div class="card"><strong>20. Sigmoid:</strong> פונקציית אקטיבציה הממירה כל ערך מספרי לטווח שבין 0 ל-1, ומשמשת לחישוב הסתברויות.</div>
-
-                <!-- קבוצה 3: תהליכי אימון ומתמטיקה -->
                 <div class="card"><strong>21. Weights:</strong> משקלים - הפרמטרים המשתנים ברשת המכפילים את ערכי הקלט ומגדירים את עוצמת הקשר בין הנירונים.</div>
                 <div class="card"><strong>22. Bias:</strong> היסט - קבוע מתמטי המתווסף לסכום המכפלות של הקלטים והמשקלים כדי להזיז את פונקציית ההפעלה.</div>
                 <div class="card"><strong>23. Weighted Sum:</strong> סכום משוקלל - תוצאת החישוב של חיבור כל הקלטים המוכפלים במשקלים שלהם בתוספת ה-Bias.</div>
                 <div class="card"><strong>24. Forward Pass:</strong> מעבר קדימה - תהליך הזרמת המידע מהקלט, דרך השכבות השונות, ועד לקבלת הניבוי הסופי בפלט.</div>
-                <div class="card"><strong>25. Backpropagation:</strong> הפצה לאחור - האלגוריתם המרכזי לאימון רשתות, המחשב את השגיאה מהסוף להתחלה ומעדכן את המשקלים.</div>
+                <div class="card"><strong>25. Backpropagation:</strong> הפצה לאחור - אלגוריתם המרכזי לאימון רשתות, המחשב את השגיאה מהסוף להתחלה ומעדכן את המשקלים.</div>
                 <div class="card"><strong>26. Loss / Cost Function:</strong> פונקציית הפסד - מדד מתמטי המחשב את גודל הטעות בין ניבוי המודל לבין התשובה הנכונה בפועל.</div>
                 <div class="card"><strong>27. Gradient Descent:</strong> שיפוע מורד - אלגוריתם אופטימיזציה המשמש למציאת המשקלים שיביאו למינימום בפונקציית ההפסד.</div>
                 <div class="card"><strong>28. Learning Rate:</strong> קצב למידה - גודל הצעד שהאלגוריתם מבצע בכל עדכון של המשקלים במטרה להגיע לטעות מינימלית.</div>
                 <div class="card"><strong>29. Epoch:</strong> מחזור למידה - הרצה אחת מלאה של כל נתוני האימון קדימה ואחורה דרך הרשת.</div>
                 <div class="card"><strong>30. Batch / Mini-batch:</strong> קבוצת נתונים - תת-קבוצה מתוך מאגר נתוני האימון המוזנת לרשת יחד לפני עדכון המשקלים.</div>
-
-                <!-- קבוצה 4: הערכה, אחסון וביצועים -->
                 <div class="card"><strong>31. Accuracy:</strong> דיוק - אחוז המקרים שבהם המודל צדק בניבוי שלו מתוך סך כל הבדיקות שבוצעו.</div>
                 <div class="card"><strong>32. Overfitting:</strong> התאמת יתר - מצב שבו המודל לומד את נתוני האימון "בעל פה" אך נכשל בזיהוי נתונים חדשים.</div>
                 <div class="card"><strong>33. Underfitting:</strong> התאמת חסר - מצב שבו המודל פשוט מדי ולא מצליח ללמוד את התבניות אפילו על נתוני האימון.</div>
@@ -72,7 +65,7 @@
                 <div class="card"><strong>37. JSON.stringify():</strong> פונקציית JavaScript הממירה אובייקט או מערך של משקלים למחרוזת טקסט לצורך שמירה ב-LocalStorage.</div>
                 <div class="card"><strong>38. JSON.parse():</strong> פונקציית JavaScript הממירה מחרוזת טקסט מה-LocalStorage חזרה לאובייקט מערכים של משקלים לשימוש הרשת.</div>
                 <div class="card"><strong>39. Training Dataset:</strong> מאגר אימון - קבוצת הצורות או התמונות המשמשת את המודל בשלב הלמידה ועדכון המשקלים.</div>
-                <div class="card"><strong>40. Testing Dataset:</strong> מאגר בדיקה - קבוצת נתונים חדשה שהמודל לא ראה מעולם, המשמשת להערכת רמת הדיוק הסופית שלו.</div>
+                <div class="card"><strong>40. Testing Dataset:</strong> מאגר בדיקה - קבוצת נתונים חדשה שהמודל לא ראה מעולם, המשמש להערכת רמת הדיוק הסופית שלו.</div>
             </div>
         </section>
     </main>
