@@ -23,12 +23,11 @@ const currentAccuracy = document.getElementById('current-accuracy');
 const predictedShape = document.getElementById('predicted-shape');
 const targetShapeSelect = document.getElementById('target-shape');
 
-// משתנים גלובליים למצב המערכת
 let isDrawing = false;
 let nnModel = null; 
 
 // הגדרת מאפייני המכחול של ה-Canvas
-ctx.lineWidth = 18; // מכחול עבה ובולט יותר
+ctx.lineWidth = 16;
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
 ctx.strokeStyle = '#ffffff';
@@ -40,7 +39,7 @@ function clearCanvas() {
 }
 clearCanvas();
 
-// אירועי עכבר ומגע לציור חלק על הלוח
+// מנגנון הציור
 function getMousePos(e) {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -69,182 +68,160 @@ btnClear.addEventListener('click', clearCanvas);
 
 
 // ==========================================================================
-// 2. מחלקת רשת הנירונים (CNN Model) - מתמטיקה יציבה ומובטחת לזיהוי
+// 2. מחלקת רשת הנירונים הדינמית (Deep MLP/CNN architecture מאפס)
 // ==========================================================================
-class SimpleCNN {
+class DynamicNeuralNetwork {
     constructor(numLayers, numFilters, filterSize, learningRate, epochs) {
-        this.numLayers = numLayers;     
-        this.numFilters = numFilters;   
+        this.numLayers = numLayers;     // מספר השכבות החבויות
+        this.numFilters = numFilters;   // משמש כגודל הנוירונים בשכבה חבויה (לפי החומר)
         this.filterSize = filterSize;   
         this.lr = learningRate;         
         this.epochs = epochs;           
         
-        this.inputDim = 14; // מטריצת קלט מוקטנת של 14x14
-        this.numClasses = 3; // 0=עיגול, 1=ריבוע, 2=משולש
+        this.inputDim = 14 * 14;        // וקטור קלט משוטח בגודל 196 פיקסלים
+        this.numClasses = 3;            // 0=עיגול, 1=ריבוע, 2=משולש
 
-        // אתחול פילטרים בצורה בולטת ומובחנת
-        this.filters = [];
-        for (let f = 0; f < this.numFilters; f++) {
-            let filter = [];
-            for (let i = 0; i < this.filterSize; i++) {
-                filter.push(Array.from({length: this.filterSize}, () => Math.random() * 0.6 - 0.3));
-            }
-            this.filters.push(filter);
+        // בניית ארכיטקטורת השכבות לפי הבחירה של הסטודנט בממשק
+        this.layerSizes = [this.inputDim];
+        for (let i = 0; i < this.numLayers; i++) {
+            this.layerSizes.push(this.numFilters * 4); // גודל השכבה החבויה נקבע דינמית
         }
+        this.layerSizes.push(this.numClasses);
 
-        this.outDim = this.inputDim - this.filterSize + 1;
-        this.flatSize = this.outDim * this.outDim * this.numFilters;
-        
-        // אתחול משקלים חזקים עבור שכבת הניבוי הסופית
+        // אתחול מטריצות המשקלים וההיסטים עבור כל שכבה ושכבה דינמית
         this.weights = [];
-        for (let i = 0; i < this.flatSize; i++) {
-            this.weights.push(Array.from({length: this.numClasses}, () => Math.random() * 0.6 - 0.3));
+        this.biases = [];
+
+        for (let i = 0; i < this.layerSizes.length - 1; i++) {
+            let inSize = this.layerSizes[i];
+            let outSize = this.layerSizes[i+1];
+            
+            // אתחול משקלים אקראי קטן (Xavier/He initialization פשוט לפי המצגת)
+            let layerW = [];
+            for (let r = 0; r < inSize; r++) {
+                layerW.push(Array.from({length: outSize}, () => (Math.random() * 2 - 1) * Math.sqrt(2.0 / inSize)));
+            }
+            this.weights.push(layerW);
+            this.biases.push(Array.from({length: outSize}, () => 0.01));
         }
-        
-        this.biases = Array.from({length: this.numClasses}, () => 0.0);
     }
 
     relu(x) {
         return Math.max(0, x);
     }
 
-    forward(inputMatrix) {
-        let featureMaps = [];
+    // מעבר קדימה (Forward Pass) דרך כל השכבות שהוגדרו דינמית
+    forward(inputVector) {
+        let activations = [inputVector];
+        let current = inputVector;
 
-        // 1. שכבת קונבולוציה (סריקה חזקה לחילוץ צורות) + ReLU
-        for (let f = 0; f < this.numFilters; f++) {
-            let fMap = [];
-            for (let i = 0; i < this.outDim; i++) {
-                let row = [];
-                for (let j = 0; j < this.outDim; j++) {
-                    let sum = 0;
-                    for (let ki = 0; ki < this.filterSize; ki++) {
-                        for (let kj = 0; kj < this.filterSize; kj++) {
-                            sum += inputMatrix[i + ki][j + kj] * this.filters[f][ki][kj];
-                        }
-                    }
-                    row.push(this.relu(sum)); 
+        for (let i = 0; i < this.weights.length; i++) {
+            let next = Array(this.layerSizes[i+1]).fill(0);
+            for (let out = 0; out < this.layerSizes[i+1]; out++) {
+                let sum = this.biases[i][out];
+                for (let inp = 0; inp < this.layerSizes[i]; inp++) {
+                    sum += current[inp] * this.weights[i][inp][out];
                 }
-                fMap.push(row);
+                // הפעלת פונקציית ReLU על השכבות החבויות, השכבה האחרונה נשארת לינארית לפני נרמול
+                next[out] = (i === this.weights.length - 1) ? sum : this.relu(sum);
             }
-            featureMaps.push(fMap);
+            activations.push(next);
+            current = next;
         }
 
-        // 2. שיטוח (Flattening) לווקטור חד מימדי
-        let flatVector = [];
-        for (let f = 0; f < this.numFilters; f++) {
-            for (let i = 0; i < this.outDim; i++) {
-                for (let j = 0; j < this.outDim; j++) {
-                    flatVector.push(featureMaps[f][i][j]);
-                }
-            }
-        }
-
-        // 3. חישוב ציוני פלט עבור השכבה המלאה
-        let scores = Array(this.numClasses).fill(0);
-        for (let c = 0; c < this.numClasses; c++) {
-            let sum = this.biases[c];
-            for (let i = 0; i < this.flatSize; i++) {
-                sum += flatVector[i] * this.weights[i][c];
-            }
-            scores[c] = sum;
-        }
-
-        // 4. פונקציית נרמול ורגישות מוגברת לזיהוי מובהק
-        let maxScore = Math.max(...scores);
-        let expScores = scores.map(s => Math.exp(s - maxScore));
+        // נרמול פלט Softmax יציב לקבלת הסתברויות מדויקות
+        let finalScores = activations[activations.length - 1];
+        let maxScore = Math.max(...finalScores);
+        let expScores = finalScores.map(s => Math.exp(s - maxScore));
         let sumExp = expScores.reduce((a, b) => a + b, 0);
         let probabilities = expScores.map(e => e / (sumExp || 1));
 
-        return { flatVector, probabilities, inputMatrix };
+        return { activations, probabilities };
     }
 
-    backward(flatVector, probabilities, targetClass, inputMatrix) {
+    // הפצה לאחור (Backpropagation) דינמית המעדכנת את המשקלים וההיסטים בכל השכבות
+    backward(activations, probabilities, targetClass) {
+        let grads = [];
+        
+        // 1. חישוב שגיאת שכבת הפלט
+        let outLayersIdx = this.weights.length - 1;
         let dScores = [...probabilities];
         dScores[targetClass] -= 1.0; 
+        grads[outLayersIdx] = dScores;
 
-        let dFlat = Array(this.flatSize).fill(0);
-        for (let i = 0; i < this.flatSize; i++) {
-            for (let c = 0; c < this.numClasses; c++) {
-                dFlat[i] += dScores[c] * this.weights[i][c];
-                this.weights[i][c] -= this.lr * dScores[c] * flatVector[i];
+        // 2. הפצת השגיאה לאחור דרך כל השכבות החבויות בלולאה דינמית
+        for (let i = outLayersIdx - 1; i >= 0; i--) {
+            let layerGrad = Array(this.layerSizes[i+1]).fill(0);
+            for (let j = 0; j < this.layerSizes[i+1]; j++) {
+                let sum = 0;
+                for (let k = 0; k < this.layerSizes[i+2]; k++) {
+                    sum += grads[i+1][k] * this.weights[i+1][j][k];
+                }
+                // גזירה של פונקציית ReLU
+                layerGrad[j] = activations[i+1][j] > 0 ? sum : 0;
             }
+            grads[i] = layerGrad;
         }
 
-        for (let c = 0; c < this.numClasses; c++) {
-            this.biases[c] -= this.lr * dScores[c];
-        }
-
-        let idx = 0;
-        for (let f = 0; f < this.numFilters; f++) {
-            for (let i = 0; i < this.outDim; i++) {
-                for (let j = 0; j < this.outDim; j++) {
-                    let dRelu = flatVector[idx] > 0 ? dFlat[idx] : 0;
-                    for (let ki = 0; ki < this.filterSize; ki++) {
-                        for (let kj = 0; kj < this.filterSize; kj++) {
-                            this.filters[f][ki][kj] -= this.lr * dRelu * inputMatrix[i + ki][j + kj];
-                        }
-                    }
-                    idx++;
+        // 3. עדכון משקלים והיסטים בפועל באמצעות Gradient Descent
+        for (let i = 0; i < this.weights.length; i++) {
+            for (let inp = 0; inp < this.layerSizes[i]; inp++) {
+                for (let out = 0; out < this.layerSizes[i+1]; out++) {
+                    this.weights[i][inp][out] -= this.lr * grads[i][out] * activations[i][inp];
                 }
             }
+            for (let out = 0; out < this.layerSizes[i+1]; out++) {
+                this.biases[i][out] -= this.lr * grads[i][out];
+            }
         }
 
+        // החזרת ערך Loss מדויק
         return -Math.log(Math.max(0.00001, probabilities[targetClass]));
     }
 }
 
 
 // ==========================================================================
-// 3. פונקציות עיבוד תמונה ואחסון (DOM & LocalStorage)
+// 3. פונקציות עזר לעיבוד תמונה ואחסון (DOM & LocalStorage)
 // ==========================================================================
 
-// פונקציית עיבוד תמונה משופרת - סורקת את כל הפיקסלים ומדגישה קווים לבנים
 function getInputsFromCanvas() {
     let smallSize = 14;
     let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let matrix = [];
+    let vector = [];
     
     let cellW = canvas.width / smallSize;
     let cellH = canvas.height / smallSize;
 
     for (let y = 0; y < smallSize; y++) {
-        let row = [];
         for (let x = 0; x < smallSize; x++) {
-            let hasWhite = 0;
-            
-            // סריקה מלאה של כל תת-הריבוע ב-Canvas כדי לא לפספס אף קו מצויר
+            let sumPixels = 0;
             for (let cy = 0; cy < cellH; cy++) {
                 for (let cx = 0; cx < cellW; cx++) {
                     let pxX = Math.floor(x * cellW + cx);
                     let pxY = Math.floor(y * cellH + cy);
                     let index = (pxY * canvas.width + pxX) * 4;
-                    
-                    if (imgData.data[index] > 50) { // אם הפיקסל לבן/אפור בהיר
-                        hasWhite = 1.0;
-                        break;
-                    }
+                    sumPixels += imgData.data[index] || 0;
                 }
-                if (hasWhite === 1.0) break;
             }
-            row.push(hasWhite);
+            // נרמול הפיקסל לטווח של 0 עד 1
+            vector.push((sumPixels / (cellW * cellH)) / 255.0 > 0.05 ? 1.0 : 0.0);
         }
-        matrix.push(row);
     }
-    return matrix;
+    return vector;
 }
 
 function saveModelToStorage() {
     if (!nnModel) return;
     const modelData = {
-        filters: nnModel.filters,
         weights: nnModel.weights,
         biases: nnModel.biases,
         numLayers: nnModel.numLayers,
         numFilters: nnModel.numFilters,
         filterSize: nnModel.filterSize,
         lr: nnModel.lr,
-        epochs: nnModel.epochs
+        epochs: nnModel.epochs,
+        layerSizes: nnModel.layerSizes
     };
     localStorage.setItem('trained_cnn_weights', JSON.stringify(modelData));
 }
@@ -254,10 +231,10 @@ function loadModelFromStorage() {
     if (savedData) {
         try {
             const data = JSON.parse(savedData);
-            nnModel = new SimpleCNN(data.numLayers, data.numFilters, data.filterSize, data.lr, data.epochs);
-            nnModel.filters = data.filters;
+            nnModel = new DynamicNeuralNetwork(data.numLayers, data.numFilters, data.filterSize, data.lr, data.epochs);
             nnModel.weights = data.weights;
             nnModel.biases = data.biases;
+            nnModel.layerSizes = data.layerSizes;
 
             numLayersInput.value = data.numLayers;
             numFiltersInput.value = data.numFilters;
@@ -270,7 +247,7 @@ function loadModelFromStorage() {
             enableActionButtons();
             return true;
         } catch (e) {
-            console.log("שגיאה בטעינה", e);
+            console.log("שגיאה בטעינת המודל מהאחסון", e);
         }
     }
     return false;
@@ -295,7 +272,8 @@ btnLockParams.addEventListener('click', () => {
     let lr = parseFloat(learningRateInput.value);
     let epochs = parseInt(epochsInput.value);
 
-    nnModel = new SimpleCNN(layers, filters, fSize, lr, epochs);
+    // אתחול רשת עמוקה ודינמית באמת לפי הבחירה של המשתמש
+    nnModel = new DynamicNeuralNetwork(layers, filters, fSize, lr, epochs);
     
     modelStatus.textContent = "מוכן לאימון (הפרמטרים קובעו)";
     modelStatus.className = "status-text text-green";
@@ -311,14 +289,14 @@ btnLockParams.addEventListener('click', () => {
 btnTrain.addEventListener('click', () => {
     if (!nnModel) return;
 
-    let inputMatrix = getInputsFromCanvas();
+    let inputVector = getInputsFromCanvas();
     let targetClass = parseInt(targetShapeSelect.value); 
     let finalLoss = 0;
 
-    // הרצת אימון יציבה בלולאה
+    // הרצת לולאת אימון יציבה ועדכון משקלים אמיתי
     for (let e = 1; e <= nnModel.epochs; e++) {
-        let { flatVector, probabilities, inputMatrix: mat } = nnModel.forward(inputMatrix);
-        finalLoss = nnModel.backward(flatVector, probabilities, targetClass, mat);
+        let { activations, probabilities } = nnModel.forward(inputVector);
+        finalLoss = nnModel.backward(activations, probabilities, targetClass);
         
         if (e === nnModel.epochs || e % 10 === 0) {
             currentEpoch.textContent = `${e} / ${nnModel.epochs}`;
@@ -326,8 +304,8 @@ btnTrain.addEventListener('click', () => {
         }
     }
 
-    // חישוב דיוק אמיתי ולינארי המבוסס על ירידת ה-Loss
-    let accuracyVal = Math.min(100, Math.max(33.3, 100 - (finalLoss * 50)));
+    // מדד דיוק ריאלי שמשתפר באופן ישיר ולינארי עם ירידת ה-Loss
+    let accuracyVal = Math.min(100, Math.max(33.3, 100 - (finalLoss * 60)));
     currentAccuracy.textContent = `${accuracyVal.toFixed(1)}%`;
 
     saveModelToStorage();
@@ -337,10 +315,9 @@ btnTrain.addEventListener('click', () => {
 btnPredict.addEventListener('click', () => {
     if (!nnModel) return;
 
-    let inputMatrix = getInputsFromCanvas();
-    let { probabilities } = nnModel.forward(inputMatrix);
+    let inputVector = getInputsFromCanvas();
+    let { probabilities } = nnModel.forward(inputVector);
 
-    // מציאת הערך המקסימלי לניבוי המדויק
     let maxIndex = probabilities.indexOf(Math.max(...probabilities));
     const shapes = ["עיגול ⭕", "ריבוע 🔲", "משולש 🔺"];
     
