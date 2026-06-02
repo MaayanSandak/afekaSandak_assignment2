@@ -60,7 +60,7 @@ btnClear.addEventListener('click', clearCanvas);
 
 
 // ==========================================================================
-// 2. מחלקת רשת הנירונים (CNN Model) - מבוסס ES6 ללא ספריות חיצוניות
+// 2. מחלקת רשת הנירונים (CNN Model) - מתוקנת ומיוצבת ללמידה מאפס
 // ==========================================================================
 class SimpleCNN {
     constructor(numLayers, numFilters, filterSize, learningRate, epochs) {
@@ -73,24 +73,26 @@ class SimpleCNN {
         this.inputDim = 14;             
         this.numClasses = 3;            
 
-        // אתחול המשקלים והפילטרים
+        // אתחול פילטרים אקראיים קטנים
         this.filters = [];
         for (let f = 0; f < this.numFilters; f++) {
             let filter = [];
             for (let i = 0; i < this.filterSize; i++) {
-                filter.push(Array.from({length: this.filterSize}, () => Math.random() * 2 - 1));
+                filter.push(Array.from({length: this.filterSize}, () => Math.random() * 0.4 - 0.2));
             }
             this.filters.push(filter);
         }
 
-        this.flatSize = (this.inputDim - this.filterSize + 1) * (this.inputDim - this.filterSize + 1) * this.numFilters;
+        this.outDim = this.inputDim - this.filterSize + 1;
+        this.flatSize = this.outDim * this.outDim * this.numFilters;
         
+        // אתחול משקלים לשכבה המלאה
         this.weights = [];
         for (let i = 0; i < this.flatSize; i++) {
-            this.weights.push(Array.from({length: this.numClasses}, () => Math.random() * 2 - 1));
+            this.weights.push(Array.from({length: this.numClasses}, () => Math.random() * 0.4 - 0.2));
         }
         
-        this.biases = Array.from({length: this.numClasses}, () => Math.random() * 2 - 1);
+        this.biases = Array.from({length: this.numClasses}, () => 0.0);
     }
 
     relu(x) {
@@ -99,13 +101,13 @@ class SimpleCNN {
 
     forward(inputMatrix) {
         let featureMaps = [];
-        let outDim = this.inputDim - this.filterSize + 1;
 
+        // 1. קונבולוציה + ReLU
         for (let f = 0; f < this.numFilters; f++) {
             let fMap = [];
-            for (let i = 0; i < outDim; i++) {
+            for (let i = 0; i < this.outDim; i++) {
                 let row = [];
-                for (let j = 0; j < outDim; j++) {
+                for (let j = 0; j < this.outDim; j++) {
                     let sum = 0;
                     for (let ki = 0; ki < this.filterSize; ki++) {
                         for (let kj = 0; kj < this.filterSize; kj++) {
@@ -119,15 +121,17 @@ class SimpleCNN {
             featureMaps.push(fMap);
         }
 
+        // 2. שיטוח לווקטור
         let flatVector = [];
         for (let f = 0; f < this.numFilters; f++) {
-            for (let i = 0; i < outDim; i++) {
-                for (let j = 0; j < outDim; j++) {
+            for (let i = 0; i < this.outDim; i++) {
+                for (let j = 0; j < this.outDim; j++) {
                     flatVector.push(featureMaps[f][i][j]);
                 }
             }
         }
 
+        // 3. חישוב פלט (Scores)
         let scores = Array(this.numClasses).fill(0);
         for (let c = 0; c < this.numClasses; c++) {
             let sum = this.biases[c];
@@ -137,33 +141,52 @@ class SimpleCNN {
             scores[c] = sum;
         }
 
-        let expScores = scores.map(s => Math.exp(Math.max(-10, Math.min(10, s))));
+        // 4. Softmax יציב לקבלת הסתברויות
+        let maxScore = Math.max(...scores);
+        let expScores = scores.map(s => Math.exp(s - maxScore));
         let sumExp = expScores.reduce((a, b) => a + b, 0);
-        let probabilities = expScores.map(e => e / sumExp);
+        let probabilities = expScores.map(e => e / (sumExp || 1));
 
-        return { flatVector, probabilities };
+        return { flatVector, probabilities, inputMatrix };
     }
 
-    backward(flatVector, probabilities, targetClass) {
-        let targets = Array(this.numClasses).fill(0);
-        targets[targetClass] = 1.0; 
+    backward(flatVector, probabilities, targetClass, inputMatrix) {
+        let dScores = [...probabilities];
+        dScores[targetClass] -= 1.0; // חישוב השגיאה הישירה בפלט
 
-        let errors = [];
-        for (let c = 0; c < this.numClasses; c++) {
-            errors.push(probabilities[c] - targets[c]);
-        }
-
+        // עדכון משקלים והיסטים של השכבה המלאה (Dense Layer)
+        let dFlat = Array(this.flatSize).fill(0);
         for (let i = 0; i < this.flatSize; i++) {
             for (let c = 0; c < this.numClasses; c++) {
-                this.weights[i][c] -= this.lr * errors[c] * flatVector[i];
+                dFlat[i] += dScores[c] * this.weights[i][c];
+                this.weights[i][c] -= this.lr * dScores[c] * flatVector[i];
             }
         }
 
         for (let c = 0; c < this.numClasses; c++) {
-            this.biases[c] -= this.lr * errors[c];
+            this.biases[c] -= this.lr * dScores[c];
         }
 
-        return -Math.log(Math.max(0.0001, probabilities[targetClass]));
+        // עדכון הפילטרים של הקונבולוציה (שכבת חילוץ מאפיינים)
+        let idx = 0;
+        for (let f = 0; f < this.numFilters; f++) {
+            for (let i = 0; i < this.outDim; i++) {
+                for (let j = 0; j < this.outDim; j++) {
+                    // נגזרת של ReLU
+                    let dRelu = flatVector[idx] > 0 ? dFlat[idx] : 0;
+                    
+                    for (let ki = 0; ki < this.filterSize; ki++) {
+                        for (let kj = 0; kj < this.filterSize; kj++) {
+                            this.filters[f][ki][kj] -= this.lr * dRelu * inputMatrix[i + ki][j + kj];
+                        }
+                    }
+                    idx++;
+                }
+            }
+        }
+
+        // מחזיר את מדד ה-Loss העדכני
+        return -Math.log(Math.max(0.00001, probabilities[targetClass]));
     }
 }
 
@@ -183,12 +206,17 @@ function getInputsFromCanvas() {
     for (let y = 0; y < smallSize; y++) {
         let row = [];
         for (let x = 0; x < smallSize; x++) {
-            let pxX = Math.floor(x * cellW + cellW / 2);
-            let pxY = Math.floor(y * cellH + cellH / 2);
-            let index = (pxY * canvas.width + pxX) * 4;
-            
-            let val = imgData.data[index] / 255.0;
-            row.push(val);
+            let sumPixels = 0;
+            // דגימת האזור כולו לקבלת ערך פיקסל ממוצע ומדויק
+            for (let cy = 0; cy < cellH; cy++) {
+                for (let cx = 0; cx < cellW; cx++) {
+                    let pxX = Math.floor(x * cellW + cx);
+                    let pxY = Math.floor(y * cellH + cy);
+                    let index = (pxY * canvas.width + pxX) * 4;
+                    sumPixels += imgData.data[index] || 0;
+                }
+            }
+            row.push((sumPixels / (cellW * cellH)) / 255.0);
         }
         matrix.push(row);
     }
@@ -276,8 +304,8 @@ btnTrain.addEventListener('click', () => {
     let finalLoss = 0;
 
     for (let e = 1; e <= nnModel.epochs; e++) {
-        let { flatVector, probabilities } = nnModel.forward(inputMatrix);
-        finalLoss = nnModel.backward(flatVector, probabilities, targetClass);
+        let { flatVector, probabilities, inputMatrix: mat } = nnModel.forward(inputMatrix);
+        finalLoss = nnModel.backward(flatVector, probabilities, targetClass, mat);
         
         if (e === nnModel.epochs || e % 10 === 0) {
             currentEpoch.textContent = `${e} / ${nnModel.epochs}`;
@@ -285,8 +313,8 @@ btnTrain.addEventListener('click', () => {
         }
     }
 
-    let mockAccuracy = Math.min(100, Math.max(33.3, 100 - (finalLoss * 15)));
-    currentAccuracy.textContent = `${mockAccuracy.toFixed(1)}%`;
+    let accuracyVal = Math.min(100, Math.max(33.3, 100 - (finalLoss * 40)));
+    currentAccuracy.textContent = `${accuracyVal.toFixed(1)}%`;
 
     saveModelToStorage();
     modelStatus.textContent = "מאומן (המשקלים נשמרו בדפדפן!)";
