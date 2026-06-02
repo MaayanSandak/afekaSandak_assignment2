@@ -18,60 +18,66 @@
     <main>
         <section id="intro">
             <h2>ברוכים הבאים לפרויקט ה-CNN שלי</h2>
-            <p>בפרויקט זה מימשנו רשת נירונים קונבולוציונית (Convolutional Neural Network) מלאה בצד הלקוח, תוך שימוש ב-JavaScript נקי בלבד וללא ספריות חיצוניות.</p>
+            <p>בפרויקט זה מימשנו רשת נירונים קונבולוציונית (Convolutional Neural Network) <strong>אמיתית</strong> בצד הלקוח, ב-JavaScript נקי בלבד וללא ספריות חיצוניות. המודל כולל שכבת קונבולוציה (Convolution) עם פילטרים נלמדים, פונקציית הפעלה ReLU, שכבת איחוד (Max Pooling), שיטוח (Flatten), שכבה/שכבות מלאות, ופלט Softmax. האימון מתבצע באמצעות הפצה לאחור (Backpropagation) עם Gradient Descent.</p>
+            <p>המודל מזהה שלוש צורות: <strong>עיגול, ריבוע ומשולש</strong>. ניתן לשלוט במספר השכבות, מספר הנירונים, מספר הפילטרים, גודל הפילטר, קצב הלמידה ומספר ה-Epochs. המשקלים נשמרים ב-LocalStorage ומגובים ב-GitHub (קובץ <code>pretrained.js</code>), כך שהמודל נטען מאומן.</p>
         </section>
 
         <section id="dictionary-section">
-            <h2>מילון מושגים מקיף בעולם ה-AI וה-CNN (לפחות 40 מושגים)</h2>
-            <p>להלן המונחים המרכזיים המלווים את הארכיטקטורה, הקוד ותהליך האימון של המערכת:</p>
+            <h2>מילון מושגים מקיף בעולם ה-AI וה-CNN (45 מושגים)</h2>
+            <p>להלן המונחים המרכזיים המלווים את הארכיטקטורה, הקוד ותהליך האימון של המערכת. רוב המונחים מופיעים בפועל בקוד (<code>script.js</code>):</p>
             
             <div class="dictionary-grid">
                 <div class="card"><strong>1. AI (Artificial Intelligence):</strong> בינה מלאכותית - תחום במדעי המחשב העוסק ביצירת מערכות הפועלות ולומדות בצורה אוטונומית.</div>
                 <div class="card"><strong>2. Machine Learning:</strong> למידת מכונה - תת-תחום ב-AI המאפשר למחשבים ללמוד מתוך נתונים ללא תכנות מפורש.</div>
                 <div class="card"><strong>3. Deep Learning:</strong> למידה עמוקה - טכנולוגיה המשתמשת ברשתות נירונים מרובות שכבות לזיהוי תבניות מורכבות.</div>
                 <div class="card"><strong>4. CNN (Convolutional Neural Network):</strong> רשת נירונים קונבולוציונית - ארכיטקטורת רשת המותאמת במיוחד לעיבוד וזיהוי תמונות.</div>
-                <div class="card"><strong>5. Biological Neuron:</strong> נירון ביולוגי - תא עצב במוח האנושי המעבד ומעביר אותות חשמליים, המהווה השראה לרשתות מלאכותיות.</div>
-                <div class="card"><strong>6. Artificial Neuron:</strong> נירון מלאכותי - יחידת חישוב בסיסית ברשת המקבלת קלטים, מכפילה אותם במשקלים ומחזירה פלט.</div>
-                <div class="card"><strong>7. Input Layer:</strong> שכבת הקלט - השכבה הראשונה ברשת המקבלת את הנתונים הגולמיים (למשל, הפיקסלים מה-Canvas).</div>
-                <div class="card"><strong>8. Hidden Layer:</strong> שכבה חבויה - שכבת חישוב שנמצאת בין שכבת הקלט לשכבת הפלט ומחלצת מאפיינים מהמידע.</div>
-                <div class="card"><strong>9. Output Layer:</strong> שכבת הפלט - השכבה האחרונה שמציגה את תוצאת המודל (זיהוי אחת מ-3 הצורות).</div>
-                <div class="card"><strong>10. Convolution:</strong> קונבולוציה (קיפול) - פעולה מתמטית הסורקת את התמונה בעזרת מטריצה קטנה ומחלצת מאפיינים מרחביים.</div>
-                <div class="card"><strong>11. Filter / Kernel:</strong> מסנן / גרעין - מטריצה קטנה של משקלים המשמשת לסריקת התמונה ואיתור קווים, קצוות וצורות.</div>
-                <div class="card"><strong>12. Feature Map:</strong> מפת מאפיינים - המטריצה המתקנת לאחר ביצוע פעולת הקונבולוציה, המציגה היכן זוהה המאפיין בתמונה.</div>
-                <div class="card"><strong>13. Stride:</strong> פסיעה - מספר הפיקסלים שהפילטר זז בכל שלב בזמן סריקת התמונה.</div>
-                <div class="card"><strong>14. Padding:</strong> ריפוד - הוספת שוליים (בדרך כלל אפסים) מסביב לתמונת הקלט כדי לשמור על ממדי המטריצה המקורית.</div>
-                <div class="card"><strong>15. Pooling:</strong> צמצום / איחוד - שכבה המקטינה את הממדים הפיזיים של מפת המאפיינים כדי להפחית חישובים ולמנוע Overfitting.</div>
-                <div class="card"><strong>16. Max Pooling:</strong> צמצום מקסימלי - שיטת Pooling הלוקחת את הערך המקסימלי מתוך תת-אזור מוגדר במטריצה.</div>
-                <div class="card"><strong>17. Average Pooling:</strong> צמצום ממוצע - שיטת Pooling המחשבת את הממוצע של כל הערכים בתת-אזור המוגדר במטריצה.</div>
-                <div class="card"><strong>18. Activation Function:</strong> פונקציית אקטיבציה (הפעלה) - פונקציה מתמטית הקובעת האם הנירון יופעל ומה יהיה עוצמת הפלט שלו.</div>
-                <div class="card"><strong>19. ReLU (Rectified Linear Unit):</strong> פונקציית הפעלה מתמטית המחזירה 0 עבור ערכים שליליים ואת הערך עצמו עבור חיוביים (f(x)=max(0,x)).</div>
-                <div class="card"><strong>20. Sigmoid:</strong> פונקציית אקטיבציה הממירה כל ערך מספרי לטווח שבין 0 ל-1, ומשמשת לחישוב הסתברויות.</div>
-                <div class="card"><strong>21. Weights:</strong> משקלים - הפרמטרים המשתנים ברשת המכפילים את ערכי הקלט ומגדירים את עוצמת הקשר בין הנירונים.</div>
-                <div class="card"><strong>22. Bias:</strong> היסט - קבוע מתמטי המתווסף לסכום המכפלות של הקלטים והמשקלים כדי להזיז את פונקציית ההפעלה.</div>
-                <div class="card"><strong>23. Weighted Sum:</strong> סכום משוקלל - תוצאת החישוב של חיבור כל הקלטים המוכפלים במשקלים שלהם בתוספת ה-Bias.</div>
-                <div class="card"><strong>24. Forward Pass:</strong> מעבר קדימה - תהליך הזרמת המידע מהקלט, דרך השכבות השונות, ועד לקבלת הניבוי הסופי בפלט.</div>
-                <div class="card"><strong>25. Backpropagation:</strong> הפצה לאחור - אלגוריתם המרכזי לאימון רשתות, המחשב את השגיאה מהסוף להתחלה ומעדכן את המשקלים.</div>
-                <div class="card"><strong>26. Loss / Cost Function:</strong> פונקציית הפסד - מדד מתמטי המחשב את גודל הטעות בין ניבוי המודל לבין התשובה הנכונה בפועל.</div>
-                <div class="card"><strong>27. Gradient Descent:</strong> שיפוע מורד - אלגוריתם אופטימיזציה המשמש למציאת המשקלים שיביאו למינימום בפונקציית ההפסד.</div>
-                <div class="card"><strong>28. Learning Rate:</strong> קצב למידה - גודל הצעד שהאלגוריתם מבצע בכל עדכון של המשקלים במטרה להגיע לטעות מינימלית.</div>
-                <div class="card"><strong>29. Epoch:</strong> מחזור למידה - הרצה אחת מלאה של כל נתוני האימון קדימה ואחורה דרך הרשת.</div>
-                <div class="card"><strong>30. Batch / Mini-batch:</strong> קבוצת נתונים - תת-קבוצה מתוך מאגר נתוני האימון המוזנת לרשת יחד לפני עדכון המשקלים.</div>
-                <div class="card"><strong>31. Accuracy:</strong> דיוק - אחוז המקרים שבהם המודל צדק בניבוי שלו מתוך סך כל הבדיקות שבוצעו.</div>
-                <div class="card"><strong>32. Overfitting:</strong> התאמת יתר - מצב שבו המודל לומד את נתוני האימון "בעל פה" אך נכשל בזיהוי נתונים חדשים.</div>
-                <div class="card"><strong>33. Underfitting:</strong> התאמת חסר - מצב שבו המודל פשוט מדי ולא מצליח ללמוד את התבניות אפילו על נתוני האימון.</div>
-                <div class="card"><strong>34. Flattening:</strong> שיטוח - תהליך המרת מטריצה דו-מימדית (כמו תמונה) לווקטור חד-מימדי ארוך לפני הכניסה לשכבה המלאה.</div>
-                <div class="card"><strong>35. Dense / Fully Connected Layer:</strong> שכבה מלאה - שכבה שבה כל נירון מחובר לכל הנירונים בשכבה שלפניה ושכבה שאחריה.</div>
-                <div class="card"><strong>36. LocalStorage:</strong> אחסון מקומי - רכיב בדפדפן המאפשר לנו לשמור את משקלי המודל המאומן כמחרוזת טקסט ללא פג תוקף.</div>
-                <div class="card"><strong>37. JSON.stringify():</strong> פונקציית JavaScript הממירה אובייקט או מערך של משקלים למחרוזת טקסט לצורך שמירה ב-LocalStorage.</div>
-                <div class="card"><strong>38. JSON.parse():</strong> פונקציית JavaScript הממירה מחרוזת טקסט מה-LocalStorage חזרה לאובייקט מערכים של משקלים לשימוש הרשת.</div>
-                <div class="card"><strong>39. Training Dataset:</strong> מאגר אימון - קבוצת הצורות או התמונות המשמשת את המודל בשלב הלמידה ועדכון המשקלים.</div>
-                <div class="card"><strong>40. Testing Dataset:</strong> מאגר בדיקה - קבוצת נתונים חדשה שהמודל לא ראה מעולם, המשמש להערכת רמת הדיוק הסופית שלו.</div>
+                <div class="card"><strong>5. Supervised Learning:</strong> למידה מונחית - אימון על נתונים מתויגים (תמונה + התווית הנכונה), בדיוק כמו במודל שלנו.</div>
+                <div class="card"><strong>6. Artificial Neuron:</strong> נירון מלאכותי - יחידת חישוב המקבלת קלטים, מכפילה אותם במשקלים, מוסיפה Bias ומחזירה פלט.</div>
+                <div class="card"><strong>7. Input Layer:</strong> שכבת הקלט - השכבה הראשונה ברשת המקבלת את הנתונים הגולמיים (מטריצת 14x14 פיקסלים מה-Canvas).</div>
+                <div class="card"><strong>8. Hidden Layer:</strong> שכבה חבויה - שכבת חישוב בין הקלט לפלט המחלצת מאפיינים. מספרן נשלט מהממשק.</div>
+                <div class="card"><strong>9. Output Layer:</strong> שכבת הפלט - השכבה האחרונה (3 נירונים) המציגה את הסתברות כל אחת מ-3 הצורות.</div>
+                <div class="card"><strong>10. Convolution:</strong> קונבולוציה - פעולה הסורקת את התמונה בעזרת פילטר קטן ומחלצת מאפיינים מרחביים. מיושמת בקוד בפונקציית ה-forward.</div>
+                <div class="card"><strong>11. Filter / Kernel:</strong> מסנן / גרעין - מטריצת משקלים נלמדת (לדוגמה 3x3) המשמשת לסריקת התמונה ואיתור קצוות וצורות.</div>
+                <div class="card"><strong>12. Feature Map:</strong> מפת מאפיינים - הפלט של פעולת הקונבולוציה לכל פילטר, מוצג חזותית בדף המודל לאחר הבדיקה.</div>
+                <div class="card"><strong>13. Stride:</strong> פסיעה - מספר הפיקסלים שהפילטר/חלון ה-Pooling זז בכל צעד (בקוד שלנו ה-Pooling פוסע ב-2).</div>
+                <div class="card"><strong>14. Padding:</strong> ריפוד - הוספת שוליים סביב התמונה כדי לשלוט בממדי הפלט. אנו משתמשים ב-Valid (ללא ריפוד).</div>
+                <div class="card"><strong>15. Pooling:</strong> איחוד / צמצום - שכבה המקטינה את ממדי מפת המאפיינים, מפחיתה חישובים ומפחיתה Overfitting.</div>
+                <div class="card"><strong>16. Max Pooling:</strong> איחוד מקסימלי - שיטת Pooling הלוקחת את הערך המקסימלי מתוך כל חלון 2x2. מיושמת בקוד.</div>
+                <div class="card"><strong>17. Average Pooling:</strong> איחוד ממוצע - שיטת Pooling חלופית המחשבת את הממוצע של חלון הערכים.</div>
+                <div class="card"><strong>18. Activation Function:</strong> פונקציית הפעלה - פונקציה לא-לינארית הקובעת את עוצמת פלט הנירון.</div>
+                <div class="card"><strong>19. ReLU (Rectified Linear Unit):</strong> פונקציית הפעלה: f(x)=max(0,x). מוחזרים 0 לערכים שליליים והערך עצמו לחיוביים. מיושמת בקוד.</div>
+                <div class="card"><strong>20. Sigmoid:</strong> פונקציית אקטיבציה הממירה ערך לטווח 0 עד 1, שימשה ברשתות קלאסיות לחישוב הסתברות.</div>
+                <div class="card"><strong>21. Softmax:</strong> פונקציה הממירה את ציוני שכבת הפלט להתפלגות הסתברויות (סכום 1). מיושמת בקוד בשכבה האחרונה.</div>
+                <div class="card"><strong>22. Weights:</strong> משקלים - הפרמטרים הנלמדים המכפילים את הקלטים. נשמרים ב-LocalStorage ומגובים ב-GitHub.</div>
+                <div class="card"><strong>23. Bias:</strong> היסט - קבוע המתווסף לסכום המשוקלל ומזיז את פונקציית ההפעלה. קיים לכל פילטר ולכל נירון.</div>
+                <div class="card"><strong>24. Weighted Sum:</strong> סכום משוקלל - תוצאת W·x + Bias, החישוב הבסיסי של כל נירון.</div>
+                <div class="card"><strong>25. Forward Pass:</strong> מעבר קדימה - הזרמת התמונה דרך קונבולוציה, ReLU, Pooling, Flatten והשכבות המלאות עד לניבוי.</div>
+                <div class="card"><strong>26. Backpropagation:</strong> הפצה לאחור - אלגוריתם האימון המחשב את השגיאה מהפלט להתחלה ומעדכן את כל המשקלים. מיושם בקוד.</div>
+                <div class="card"><strong>27. Loss / Cost Function:</strong> פונקציית הפסד - מדד גודל הטעות. אנו משתמשים ב-Cross-Entropy יחד עם Softmax.</div>
+                <div class="card"><strong>28. Cross-Entropy:</strong> אנטרופיה צולבת - פונקציית ההפסד לסיווג רב-מחלקתי, -log של ההסתברות שניתנה למחלקה הנכונה.</div>
+                <div class="card"><strong>29. Gradient Descent:</strong> שיפוע מורד - אלגוריתם אופטימיזציה שמעדכן משקלים בכיוון ההפוך לגרדיאנט כדי למזער את ההפסד.</div>
+                <div class="card"><strong>30. SGD (Stochastic Gradient Descent):</strong> ירידת גרדיאנט סטוכסטית - עדכון המשקלים אחרי כל דוגמה (כפי שמיושם בלולאת האימון).</div>
+                <div class="card"><strong>31. Learning Rate:</strong> קצב למידה - גודל הצעד בכל עדכון משקלים. נשלט מהממשק.</div>
+                <div class="card"><strong>32. Epoch:</strong> מחזור למידה - מעבר מלא אחד על כל נתוני האימון קדימה ואחורה. מספרם נשלט מהממשק.</div>
+                <div class="card"><strong>33. Batch / Mini-batch:</strong> קבוצת נתונים - תת-קבוצה מהמאגר המוזנת לרשת לפני עדכון. כאן עובדים ב-Batch בגודל 1 (SGD).</div>
+                <div class="card"><strong>34. Accuracy:</strong> דיוק - אחוז הניבויים הנכונים מתוך כל הבדיקות. מחושב בקוד באמת מול סט הנתונים.</div>
+                <div class="card"><strong>35. Overfitting:</strong> התאמת יתר - המודל לומד את האימון "בעל פה" ונכשל על נתונים חדשים.</div>
+                <div class="card"><strong>36. Underfitting:</strong> התאמת חסר - המודל פשוט מדי ולא לומד את התבניות אפילו על נתוני האימון.</div>
+                <div class="card"><strong>37. Flatten:</strong> שיטוח - הפיכת מפות המאפיינים הדו-ממדיות לווקטור חד-ממדי לפני השכבה המלאה. מיושם בקוד.</div>
+                <div class="card"><strong>38. Dense / Fully Connected:</strong> שכבה מלאה - שכבה שבה כל נירון מחובר לכל נירוני השכבה הקודמת.</div>
+                <div class="card"><strong>39. He Initialization:</strong> אתחול He - אתחול אקראי של משקלים בהתאם למספר הקלטים, מתאים ל-ReLU. מיושם בבנאי הרשת.</div>
+                <div class="card"><strong>40. Argmax:</strong> ארגמקס - בחירת המחלקה בעלת ההסתברות הגבוהה ביותר כניבוי הסופי. מיושם בפונקציית הבדיקה.</div>
+                <div class="card"><strong>41. LocalStorage:</strong> אחסון מקומי - רכיב HTML5 בדפדפן השומר את משקלי המודל כמחרוזת טקסט ללא פג תוקף.</div>
+                <div class="card"><strong>42. JSON.stringify():</strong> פונקציית JavaScript הממירה את אובייקט המשקלים למחרוזת לצורך שמירה ב-LocalStorage.</div>
+                <div class="card"><strong>43. JSON.parse():</strong> פונקציית JavaScript הממירה את המחרוזת מה-LocalStorage חזרה לאובייקט משקלים.</div>
+                <div class="card"><strong>44. Training Dataset:</strong> מאגר אימון - אוסף הצורות המתויגות שעליו לומד המודל (נוצר אוטומטית + דוגמאות שהמשתמש מוסיף).</div>
+                <div class="card"><strong>45. Testing / Prediction:</strong> בדיקה / ניבוי - הזנת ציור חדש למודל המאומן וקבלת הסיווג, ללא עדכון משקלים.</div>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>© 2026 פותח במסגרת קורס פיתוח פלטפורמות WEB | אפיקה</p>
+        <p>© 2026 פותח במסגרת קורס פיתוח פלטפורמות WEB | אפקה</p>
     </footer>
 
 </body>
