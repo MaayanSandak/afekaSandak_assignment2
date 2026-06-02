@@ -274,3 +274,111 @@ footer {
     margin-top: 50px;
     box-sizing: border-box;
 }
+
+/* ===== תוספות לפרויקט ה-CNN ===== */
+
+code {
+    background-color: #eef2f7;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+    color: #c0392b;
+}
+
+#intro code { direction: ltr; display: inline-block; }
+
+/* שדות נעולים לאחר קביעת הפרמטרים */
+.control-group input:disabled, .control-group select:disabled {
+    background-color: #ecf0f1;
+    color: #7f8c8d;
+    cursor: not-allowed;
+}
+
+#model-arch {
+    font-size: 12px;
+    color: #16a085;
+    direction: ltr;
+    display: inline-block;
+    text-align: left;
+}
+
+/* ברי הסתברות של הניבוי */
+.prob-bars {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.prob-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+}
+
+.prob-label {
+    width: 70px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.prob-track {
+    flex: 1;
+    background-color: #ecf0f1;
+    border-radius: 10px;
+    height: 18px;
+    overflow: hidden;
+}
+
+.prob-fill {
+    height: 100%;
+    background-color: #2ecc71;
+    border-radius: 10px;
+    transition: width 0.4s;
+}
+
+.prob-val {
+    width: 55px;
+    font-size: 13px;
+    color: #34495e;
+    text-align: left;
+}
+
+/* תצוגת מפות המאפיינים */
+.feature-maps-section {
+    margin-top: 25px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.feature-maps-section h3 {
+    color: #2c3e50;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.feature-maps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.feature-map-wrap {
+    text-align: center;
+}
+
+.feature-map {
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    background-color: #000;
+    image-rendering: pixelated;
+}
+
+.feature-map-cap {
+    font-size: 11px;
+    color: #7f8c8d;
+    margin-top: 3px;
+}
