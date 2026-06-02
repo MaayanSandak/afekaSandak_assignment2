@@ -42,6 +42,7 @@ const SHAPE_NAMES = ["עיגול ⭕", "ריבוע 🔲", "משולש 🔺"];
 
 let nnModel = null;
 let dataset = { X: [], Y: [] };     // סט האימון (דוגמאות שהמשתמש מוסיף + דוגמאות אוטומטיות)
+const STORAGE_KEY = 'cnn_model_v2';  // מפתח גרסה - מתעלם ממודלים ישנים בפורמט שונה
 
 // --------------------------------------------------------------------------
 // 2. הציור: מצייר חזותית על ה-Canvas וגם רושם לרשת לוגית 14x14
@@ -100,9 +101,25 @@ canvas.addEventListener('mouseup', () => isDrawing = false);
 canvas.addEventListener('mouseleave', () => isDrawing = false);
 btnClear.addEventListener('click', clearCanvas);
 
-// מחזיר עותק של מטריצת הקלט של הציור הנוכחי
+// מחזיר עותק של מטריצת הקלט של הציור הנוכחי (ממורכז לפי תיבה חוסמת)
 function getInputGrid() {
-    return drawGrid.map(row => row.slice());
+    return normalizeGrid(drawGrid.map(row => row.slice()));
+}
+
+// מרכוז הצורה לפי תיבה חוסמת - כך שמיקום הציור על הלוח לא משפיע על הזיהוי
+function normalizeGrid(g) {
+    let minR = GRID, minC = GRID, maxR = -1, maxC = -1;
+    for (let r = 0; r < GRID; r++)
+        for (let c = 0; c < GRID; c++)
+            if (g[r][c]) { if (r < minR) minR = r; if (r > maxR) maxR = r; if (c < minC) minC = c; if (c > maxC) maxC = c; }
+    if (maxR < 0) return g;
+    let sr = Math.round((GRID - 1) / 2 - (minR + maxR) / 2);
+    let sc = Math.round((GRID - 1) / 2 - (minC + maxC) / 2);
+    let out = createEmptyGrid();
+    for (let r = 0; r < GRID; r++)
+        for (let c = 0; c < GRID; c++)
+            if (g[r][c]) { let nr = r + sr, nc = c + sc; if (nr >= 0 && nr < GRID && nc >= 0 && nc < GRID) out[nr][nc] = 1; }
+    return out;
 }
 
 // --------------------------------------------------------------------------
@@ -357,6 +374,22 @@ class ConvNet {
 function blankGrid() { return createEmptyGrid(); }
 function setPixel(g, x, y) { if (x >= 0 && x < GRID && y >= 0 && y < GRID) g[y][x] = 1; }
 
+// עיבוי הצורה בפיקסל (לחיקוי קו עבה בציור חופשי)
+function thicken(g) {
+    let out = blankGrid();
+    for (let r = 0; r < GRID; r++)
+        for (let c = 0; c < GRID; c++)
+            if (g[r][c]) { setPixel(out, c, r); setPixel(out, c + 1, r); setPixel(out, c, r + 1); }
+    return out;
+}
+// הגברת מגוון: עיבוי אקראי, מעט רעש, ומרכוז - תואם לאופן שבו אומן המודל
+function augment(g) {
+    if (Math.random() < 0.5) g = thicken(g);
+    let n = Math.floor(rnd(0, 3));
+    for (let k = 0; k < n; k++) { let r = Math.floor(rnd(0, GRID)), c = Math.floor(rnd(0, GRID)); g[r][c] = 1; }
+    return normalizeGrid(g);
+}
+
 // אלגוריתם קו (Bresenham) לציור קצוות הצורות
 function drawLine(g, x0, y0, x1, y1) {
     let dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
@@ -397,12 +430,12 @@ function genTriangle() {
     return g;
 }
 
-// מוסיף דוגמאות אוטומטיות מתויגות לסט האימון
+// מוסיף דוגמאות אוטומטיות מתויגות לסט האימון (עם הגברת מגוון ומרכוז)
 function seedDataset(perClass) {
     for (let i = 0; i < perClass; i++) {
-        dataset.X.push(genCircle()); dataset.Y.push(0);
-        dataset.X.push(genSquare()); dataset.Y.push(1);
-        dataset.X.push(genTriangle()); dataset.Y.push(2);
+        dataset.X.push(augment(genCircle())); dataset.Y.push(0);
+        dataset.X.push(augment(genSquare())); dataset.Y.push(1);
+        dataset.X.push(augment(genTriangle())); dataset.Y.push(2);
     }
 }
 
@@ -419,7 +452,14 @@ function evaluateAccuracy() {
 
 function saveModelToStorage() {
     if (!nnModel) return;
-    localStorage.setItem('trained_cnn_weights', JSON.stringify(nnModel.serialize()));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nnModel.serialize()));
+}
+
+// בדיקה שהאובייקט השמור תואם לפורמט הנוכחי (אחרת מתעלמים ממנו)
+function isValidModelData(d) {
+    return d && Array.isArray(d.filters) && Array.isArray(d.W) && Array.isArray(d.sizes)
+        && typeof d.numFilters === 'number' && typeof d.filterSize === 'number'
+        && typeof d.numHiddenLayers === 'number' && typeof d.hiddenSize === 'number';
 }
 
 function loadModelFromObject(data) {
@@ -435,8 +475,8 @@ function loadModelFromObject(data) {
 function updateArchLabel() {
     if (!nnModel) { modelArch.textContent = "-"; return; }
     modelArch.textContent =
-        `קלט 14x14 ← Conv ${nnModel.numFilters}×${nnModel.filterSize}x${nnModel.filterSize} ← ReLU ← Pool 2x2 ← Flatten(${nnModel.flatSize}) ← ` +
-        `${nnModel.numHiddenLayers}×Dense(${nnModel.hiddenSize}) ← Softmax(3)`;
+        `Input 14x14 → Conv(${nnModel.numFilters}@${nnModel.filterSize}x${nnModel.filterSize}) → ReLU → MaxPool 2x2 → ` +
+        `Flatten(${nnModel.flatSize}) → ${nnModel.numHiddenLayers}xDense(${nnModel.hiddenSize}) → Softmax(3)`;
 }
 
 function enableActionButtons() {
@@ -513,11 +553,16 @@ function renderFeatureMaps() {
 // 7. אירועים וכפתורי הממשק
 // --------------------------------------------------------------------------
 btnLockParams.addEventListener('click', () => {
-    let layers = parseInt(numLayersInput.value);
-    let neurons = parseInt(numNeuronsInput.value);
-    let filters = parseInt(numFiltersInput.value);
-    let fSize = parseInt(filterSizeSelect.value);
-    let lr = parseFloat(learningRateInput.value);
+    // קריאת הפרמטרים עם ערכי ברירת מחדל בטוחים אם שדה ריק/לא תקין
+    let layers = parseInt(numLayersInput.value); if (isNaN(layers)) layers = 1;
+    let neurons = parseInt(numNeuronsInput.value); if (isNaN(neurons)) neurons = 32;
+    let filters = parseInt(numFiltersInput.value); if (isNaN(filters)) filters = 6;
+    let fSize = parseInt(filterSizeSelect.value); if (isNaN(fSize)) fSize = 3;
+    let lr = parseFloat(learningRateInput.value); if (isNaN(lr) || lr <= 0) lr = 0.03;
+
+    // החזרת הערכים המתוקנים לשדות (כדי שלא יישארו ריקים)
+    numLayersInput.value = layers; numNeuronsInput.value = neurons;
+    numFiltersInput.value = filters; filterSizeSelect.value = fSize; learningRateInput.value = lr;
 
     // יצירת רשת חדשה לפי הבחירה של המשתמש
     nnModel = new ConvNet(filters, fSize, layers, neurons, lr);
@@ -557,6 +602,7 @@ btnAddSample.addEventListener('click', () => {
 btnTrain.addEventListener('click', () => {
     if (!nnModel) return;
     let epochs = parseInt(epochsInput.value);
+    if (isNaN(epochs) || epochs < 1) { epochs = 40; epochsInput.value = 40; }
     modelStatus.textContent = "מאמן...";
 
     // לולאת אימון: SGD על כל הדוגמאות, עם ערבוב בכל Epoch
@@ -602,7 +648,7 @@ btnPredict.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
-    localStorage.removeItem('trained_cnn_weights');
+    localStorage.removeItem(STORAGE_KEY);
     nnModel = null;
     dataset = { X: [], Y: [] };
     clearCanvas();
@@ -642,16 +688,21 @@ btnExport.addEventListener('click', () => {
 // --------------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
     let loaded = false;
-    let saved = localStorage.getItem('trained_cnn_weights');
+    let saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
         try {
-            loadModelFromObject(JSON.parse(saved));
-            modelStatus.textContent = "מאומן וטעון (מ-LocalStorage)";
-            modelStatus.className = "status-text text-green";
-            loaded = true;
-        } catch (err) { console.log("שגיאה בטעינה מ-LocalStorage", err); }
+            let data = JSON.parse(saved);
+            if (isValidModelData(data)) {
+                loadModelFromObject(data);
+                modelStatus.textContent = "מאומן וטעון (מ-LocalStorage)";
+                modelStatus.className = "status-text text-green";
+                loaded = true;
+            } else {
+                localStorage.removeItem(STORAGE_KEY);   // מודל ישן/לא תואם - מתעלמים
+            }
+        } catch (err) { localStorage.removeItem(STORAGE_KEY); }
     }
-    if (!loaded && typeof window.PRETRAINED_MODEL !== 'undefined') {
+    if (!loaded && typeof window.PRETRAINED_MODEL !== 'undefined' && isValidModelData(window.PRETRAINED_MODEL)) {
         loadModelFromObject(window.PRETRAINED_MODEL);
         modelStatus.textContent = "מאומן וטעון (מ-GitHub / pretrained.js)";
         modelStatus.className = "status-text text-green";
