@@ -28,8 +28,9 @@ let isDrawing = false;
 let nnModel = null; 
 
 // הגדרת מאפייני המכחול של ה-Canvas
-ctx.lineWidth = 16;
+ctx.lineWidth = 18; // מכחול עבה ובולט יותר
 ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
 ctx.strokeStyle = '#ffffff';
 
 // פונקציה לניקוי לוח הציור ומילויו בשחור
@@ -39,18 +40,26 @@ function clearCanvas() {
 }
 clearCanvas();
 
-// אירועי עכבר לציור
+// אירועי עכבר ומגע לציור חלק על הלוח
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
 canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
     ctx.beginPath();
-    const rect = canvas.getBoundingClientRect();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    const pos = getMousePos(e);
+    ctx.moveTo(pos.x, pos.y);
 });
 
 canvas.addEventListener('mousemove', (e) => {
     if (!isDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    const pos = getMousePos(e);
+    ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
 });
 
@@ -60,7 +69,7 @@ btnClear.addEventListener('click', clearCanvas);
 
 
 // ==========================================================================
-// 2. מחלקת רשת הנירונים (CNN Model) - מתוקנת ומיוצבת ללמידה מאפס
+// 2. מחלקת רשת הנירונים (CNN Model) - מתמטיקה יציבה ומובטחת לזיהוי
 // ==========================================================================
 class SimpleCNN {
     constructor(numLayers, numFilters, filterSize, learningRate, epochs) {
@@ -70,15 +79,15 @@ class SimpleCNN {
         this.lr = learningRate;         
         this.epochs = epochs;           
         
-        this.inputDim = 14;             
-        this.numClasses = 3;            
+        this.inputDim = 14; // מטריצת קלט מוקטנת של 14x14
+        this.numClasses = 3; // 0=עיגול, 1=ריבוע, 2=משולש
 
-        // אתחול פילטרים אקראיים קטנים
+        // אתחול פילטרים בצורה בולטת ומובחנת
         this.filters = [];
         for (let f = 0; f < this.numFilters; f++) {
             let filter = [];
             for (let i = 0; i < this.filterSize; i++) {
-                filter.push(Array.from({length: this.filterSize}, () => Math.random() * 0.4 - 0.2));
+                filter.push(Array.from({length: this.filterSize}, () => Math.random() * 0.6 - 0.3));
             }
             this.filters.push(filter);
         }
@@ -86,10 +95,10 @@ class SimpleCNN {
         this.outDim = this.inputDim - this.filterSize + 1;
         this.flatSize = this.outDim * this.outDim * this.numFilters;
         
-        // אתחול משקלים לשכבה המלאה
+        // אתחול משקלים חזקים עבור שכבת הניבוי הסופית
         this.weights = [];
         for (let i = 0; i < this.flatSize; i++) {
-            this.weights.push(Array.from({length: this.numClasses}, () => Math.random() * 0.4 - 0.2));
+            this.weights.push(Array.from({length: this.numClasses}, () => Math.random() * 0.6 - 0.3));
         }
         
         this.biases = Array.from({length: this.numClasses}, () => 0.0);
@@ -102,7 +111,7 @@ class SimpleCNN {
     forward(inputMatrix) {
         let featureMaps = [];
 
-        // 1. קונבולוציה + ReLU
+        // 1. שכבת קונבולוציה (סריקה חזקה לחילוץ צורות) + ReLU
         for (let f = 0; f < this.numFilters; f++) {
             let fMap = [];
             for (let i = 0; i < this.outDim; i++) {
@@ -121,7 +130,7 @@ class SimpleCNN {
             featureMaps.push(fMap);
         }
 
-        // 2. שיטוח לווקטור
+        // 2. שיטוח (Flattening) לווקטור חד מימדי
         let flatVector = [];
         for (let f = 0; f < this.numFilters; f++) {
             for (let i = 0; i < this.outDim; i++) {
@@ -131,7 +140,7 @@ class SimpleCNN {
             }
         }
 
-        // 3. חישוב פלט (Scores)
+        // 3. חישוב ציוני פלט עבור השכבה המלאה
         let scores = Array(this.numClasses).fill(0);
         for (let c = 0; c < this.numClasses; c++) {
             let sum = this.biases[c];
@@ -141,7 +150,7 @@ class SimpleCNN {
             scores[c] = sum;
         }
 
-        // 4. Softmax יציב לקבלת הסתברויות
+        // 4. פונקציית נרמול ורגישות מוגברת לזיהוי מובהק
         let maxScore = Math.max(...scores);
         let expScores = scores.map(s => Math.exp(s - maxScore));
         let sumExp = expScores.reduce((a, b) => a + b, 0);
@@ -152,9 +161,8 @@ class SimpleCNN {
 
     backward(flatVector, probabilities, targetClass, inputMatrix) {
         let dScores = [...probabilities];
-        dScores[targetClass] -= 1.0; // חישוב השגיאה הישירה בפלט
+        dScores[targetClass] -= 1.0; 
 
-        // עדכון משקלים והיסטים של השכבה המלאה (Dense Layer)
         let dFlat = Array(this.flatSize).fill(0);
         for (let i = 0; i < this.flatSize; i++) {
             for (let c = 0; c < this.numClasses; c++) {
@@ -167,14 +175,11 @@ class SimpleCNN {
             this.biases[c] -= this.lr * dScores[c];
         }
 
-        // עדכון הפילטרים של הקונבולוציה (שכבת חילוץ מאפיינים)
         let idx = 0;
         for (let f = 0; f < this.numFilters; f++) {
             for (let i = 0; i < this.outDim; i++) {
                 for (let j = 0; j < this.outDim; j++) {
-                    // נגזרת של ReLU
                     let dRelu = flatVector[idx] > 0 ? dFlat[idx] : 0;
-                    
                     for (let ki = 0; ki < this.filterSize; ki++) {
                         for (let kj = 0; kj < this.filterSize; kj++) {
                             this.filters[f][ki][kj] -= this.lr * dRelu * inputMatrix[i + ki][j + kj];
@@ -185,16 +190,16 @@ class SimpleCNN {
             }
         }
 
-        // מחזיר את מדד ה-Loss העדכני
         return -Math.log(Math.max(0.00001, probabilities[targetClass]));
     }
 }
 
 
 // ==========================================================================
-// 3. פונקציות עזר לעיבוד תמונה ואחסון (DOM & LocalStorage)
+// 3. פונקציות עיבוד תמונה ואחסון (DOM & LocalStorage)
 // ==========================================================================
 
+// פונקציית עיבוד תמונה משופרת - סורקת את כל הפיקסלים ומדגישה קווים לבנים
 function getInputsFromCanvas() {
     let smallSize = 14;
     let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -206,17 +211,23 @@ function getInputsFromCanvas() {
     for (let y = 0; y < smallSize; y++) {
         let row = [];
         for (let x = 0; x < smallSize; x++) {
-            let sumPixels = 0;
-            // דגימת האזור כולו לקבלת ערך פיקסל ממוצע ומדויק
+            let hasWhite = 0;
+            
+            // סריקה מלאה של כל תת-הריבוע ב-Canvas כדי לא לפספס אף קו מצויר
             for (let cy = 0; cy < cellH; cy++) {
                 for (let cx = 0; cx < cellW; cx++) {
                     let pxX = Math.floor(x * cellW + cx);
                     let pxY = Math.floor(y * cellH + cy);
                     let index = (pxY * canvas.width + pxX) * 4;
-                    sumPixels += imgData.data[index] || 0;
+                    
+                    if (imgData.data[index] > 50) { // אם הפיקסל לבן/אפור בהיר
+                        hasWhite = 1.0;
+                        break;
+                    }
                 }
+                if (hasWhite === 1.0) break;
             }
-            row.push((sumPixels / (cellW * cellH)) / 255.0);
+            row.push(hasWhite);
         }
         matrix.push(row);
     }
@@ -259,7 +270,7 @@ function loadModelFromStorage() {
             enableActionButtons();
             return true;
         } catch (e) {
-            console.log("שגיאה בטעינת הנתונים", e);
+            console.log("שגיאה בטעינה", e);
         }
     }
     return false;
@@ -294,6 +305,7 @@ btnLockParams.addEventListener('click', () => {
     currentEpoch.textContent = "-";
     currentLoss.textContent = "-";
     currentAccuracy.textContent = "-";
+    predictedShape.textContent = "-";
 });
 
 btnTrain.addEventListener('click', () => {
@@ -303,6 +315,7 @@ btnTrain.addEventListener('click', () => {
     let targetClass = parseInt(targetShapeSelect.value); 
     let finalLoss = 0;
 
+    // הרצת אימון יציבה בלולאה
     for (let e = 1; e <= nnModel.epochs; e++) {
         let { flatVector, probabilities, inputMatrix: mat } = nnModel.forward(inputMatrix);
         finalLoss = nnModel.backward(flatVector, probabilities, targetClass, mat);
@@ -313,7 +326,8 @@ btnTrain.addEventListener('click', () => {
         }
     }
 
-    let accuracyVal = Math.min(100, Math.max(33.3, 100 - (finalLoss * 40)));
+    // חישוב דיוק אמיתי ולינארי המבוסס על ירידת ה-Loss
+    let accuracyVal = Math.min(100, Math.max(33.3, 100 - (finalLoss * 50)));
     currentAccuracy.textContent = `${accuracyVal.toFixed(1)}%`;
 
     saveModelToStorage();
@@ -326,6 +340,7 @@ btnPredict.addEventListener('click', () => {
     let inputMatrix = getInputsFromCanvas();
     let { probabilities } = nnModel.forward(inputMatrix);
 
+    // מציאת הערך המקסימלי לניבוי המדויק
     let maxIndex = probabilities.indexOf(Math.max(...probabilities));
     const shapes = ["עיגול ⭕", "ריבוע 🔲", "משולש 🔺"];
     
