@@ -49,6 +49,7 @@ const STORAGE_KEY = 'cnn_model_v2';  // מפתח גרסה - מתעלם ממוד�
 // --------------------------------------------------------------------------
 let isDrawing = false;
 let drawGrid = createEmptyGrid();   // מטריצת הקלט הלוגית של הציור הנוכחי
+let lastX = null, lastY = null;     // הנקודה הקודמת - לחיבור קו רציף
 
 function createEmptyGrid() {
     let g = [];
@@ -81,12 +82,26 @@ function markGridFromPoint(x, y) {
     if (gx >= 0 && gx < GRID && gy >= 0 && gy < GRID) drawGrid[gy][gx] = 1;
 }
 
+// מחבר את הנקודה הקודמת לנוכחית בקו רציף (סוגר פערים בציור מהיר)
+function markSegment(x, y) {
+    let cellSize = canvas.width / GRID;
+    if (lastX === null) { markGridFromPoint(x, y); lastX = x; lastY = y; return; }
+    let dist = Math.sqrt((x - lastX) * (x - lastX) + (y - lastY) * (y - lastY));
+    let steps = Math.max(1, Math.ceil(dist / (cellSize / 2)));
+    for (let i = 1; i <= steps; i++) {
+        let t = i / steps;
+        markGridFromPoint(lastX + (x - lastX) * t, lastY + (y - lastY) * t);
+    }
+    lastX = x; lastY = y;
+}
+
 canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
+    lastX = null; lastY = null;          // התחלת קו חדש
     ctx.beginPath();
     const pos = getMousePos(e);
     ctx.moveTo(pos.x, pos.y);
-    markGridFromPoint(pos.x, pos.y);
+    markSegment(pos.x, pos.y);
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -94,11 +109,11 @@ canvas.addEventListener('mousemove', (e) => {
     const pos = getMousePos(e);
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
-    markGridFromPoint(pos.x, pos.y);
+    markSegment(pos.x, pos.y);
 });
 
-canvas.addEventListener('mouseup', () => isDrawing = false);
-canvas.addEventListener('mouseleave', () => isDrawing = false);
+canvas.addEventListener('mouseup', () => { isDrawing = false; lastX = null; lastY = null; });
+canvas.addEventListener('mouseleave', () => { isDrawing = false; lastX = null; lastY = null; });
 btnClear.addEventListener('click', clearCanvas);
 
 // מחזיר עותק של מטריצת הקלט של הציור הנוכחי (ממורכז לפי תיבה חוסמת)
