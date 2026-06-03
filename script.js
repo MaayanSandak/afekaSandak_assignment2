@@ -15,7 +15,6 @@ const btnAddSample = document.getElementById('btn-add-sample');
 const btnTrain = document.getElementById('btn-train');
 const btnPredict = document.getElementById('btn-predict');
 const btnReset = document.getElementById('btn-reset');
-const btnExport = document.getElementById('btn-export');
 
 const numLayersInput = document.getElementById('num-layers');
 const numNeuronsInput = document.getElementById('num-neurons');
@@ -38,7 +37,7 @@ const targetShapeSelect = document.getElementById('target-shape');
 
 const GRID = 14;                    // התמונה מוקטנת לרשת 14x14
 const NUM_CLASSES = 3;              // 0=עיגול, 1=ריבוע, 2=משולש
-const SHAPE_NAMES = ["עיגול ⭕", "ריבוע 🔲", "משולש 🔺"];
+const SHAPE_NAMES = ["עיגול", "ריבוע", "משולש"];
 
 let nnModel = null;
 let dataset = { X: [], Y: [] };     // סט האימון (דוגמאות שהמשתמש מוסיף + דוגמאות אוטומטיות)
@@ -683,19 +682,6 @@ btnReset.addEventListener('click', () => {
     predictedShape.textContent = "-";
     probBars.innerHTML = "";
     featureMapsDiv.innerHTML = "";
-});
-
-// ייצוא המשקלים לקובץ JSON (להעלאה ל-GitHub כגיבוי)
-btnExport.addEventListener('click', () => {
-    if (!nnModel) { alert("אין מודל לייצוא. יש לקבוע פרמטרים ולאמן."); return; }
-    let dataStr = "window.PRETRAINED_MODEL = " + JSON.stringify(nnModel.serialize()) + ";\n";
-    let blob = new Blob([dataStr], { type: 'text/javascript' });
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement('a');
-    a.href = url;
-    a.download = 'pretrained.js';
-    a.click();
-    URL.revokeObjectURL(url);
 });
 
 // --------------------------------------------------------------------------
