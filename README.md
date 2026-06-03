@@ -12,4 +12,4 @@
 - **`model.html`** – עורך הציור ומסך ניהול ואימון המודל.
 
 ## קישור לאתר
-
+https://maayansandak.github.io/afekaSandak_assignment2/
