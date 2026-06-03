@@ -687,6 +687,7 @@ btnExport.addEventListener('click', () => {
 // 8. טעינה ראשונית: LocalStorage, אחרת המודל המאומן מ-GitHub (pretrained.js)
 // --------------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
+    localStorage.removeItem('trained_cnn_weights');   // ניקוי מודל מהגרסה הישנה (פורמט לא תואם)
     let loaded = false;
     let saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
